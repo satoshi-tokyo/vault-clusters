@@ -2,7 +2,7 @@
 
 DC=docker compose
 
-# Default target: run docker compose up --build --detach
+# Set default target to upbuild, which runs docker compose up --build --detach
 .DEFAULT_GOAL := upbuild
 
 upbuild:
