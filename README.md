@@ -1,7 +1,7 @@
 # vault-clusters
 
 ```shell
-% git clone git@github.com:satoshi-tokyo/vault-clusters.git
+% git clone git@github.com:hashicorp-japan/vault-tools.git
 % cd vault-clusters/
 
 # start
