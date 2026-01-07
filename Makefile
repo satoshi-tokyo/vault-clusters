@@ -1,6 +1,6 @@
 # Makefile for Docker Compose operations
 
-DC=docker-compose
+DC=docker compose
 
 up:
 	$(DC) up -d
