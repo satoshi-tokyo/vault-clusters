@@ -64,7 +64,7 @@ $ docker exec -it vault-enterprise-cluster-dr \
 
 ## Setup user
 ```
-$ VAULT_ADDR=${PRI_ADDR} vault login 
+$ VAULT_ADDR=${PRI_ADDR} vault login
 Token (will be hidden): <CLUSTER_PRI_ROOT_TOKEN>
 
 $ vault policy write -address=${PRI_ADDR} superpolicy -<<EOF
