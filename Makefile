@@ -8,7 +8,8 @@ PERF_CONT=vault-enterprise-cluster-perf
 DR_CONT=vault-enterprise-cluster-dr
 
 # Function to extract and clean a value from init file
-# Usage: $(call extract_value,pattern,file)
+# Extracts a value matching the pattern and removes ANSI color codes
+# Usage: $(call extract_value,Unseal Key 1,$(PRI)/.init)
 define extract_value
 $$(awk '/$(1)/ {print $$$$NF}' $(2) | sed 's/\x1b\[[0-9;]*m//g' | tr -d '\r\n')
 endef
