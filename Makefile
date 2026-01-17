@@ -13,9 +13,9 @@ up:
 	$(DC) up --build --detach
 
 init:
-	docker exec -it $(PRI_CONT) vault operator init -address=http://127.0.0.1:8200 -key-shares=1 -key-threshold=1 > $(PRI)/.init
-	docker exec -it $(PERF_CONT) vault operator init -address=http://127.0.0.1:8210 -key-shares=1 -key-threshold=1 > $(PERF)/.init
-	docker exec -it $(DR_CONT) vault operator init -address=http://127.0.0.1:8220 -key-shares=1 -key-threshold=1 > $(DR)/.init
+	docker exec -i $(PRI_CONT) vault operator init -address=http://127.0.0.1:8200 -key-shares=1 -key-threshold=1 > $(PRI)/.init
+	docker exec -i $(PERF_CONT) vault operator init -address=http://127.0.0.1:8210 -key-shares=1 -key-threshold=1 > $(PERF)/.init
+	docker exec -i $(DR_CONT) vault operator init -address=http://127.0.0.1:8220 -key-shares=1 -key-threshold=1 > $(DR)/.init
 
 unseal:
 	docker exec -it $(PRI_CONT) vault operator unseal -address=http://127.0.0.1:8200 $$(awk '/Unseal Key 1/ {print $$NF}' $(PRI)/.init | sed 's/\x1b\[[0-9;]*m//g' | tr -d '\r\n')
