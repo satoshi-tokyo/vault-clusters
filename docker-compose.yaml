@@ -7,11 +7,11 @@ networks:
 # --- Service Definitions ---
 services:
   # 1. Primary Cluster Node
-  cluster-pri:
+  cluster-pri-nd-1:
     # Use the Vault Enterprise image
     image: hashicorp/vault-enterprise:latest
-    container_name: vault-enterprise-cluster-pri
-    hostname: cluster-pri
+    container_name: vault-ent-pri-nd-1
+    hostname: cluster-pri-nd-1
     # Connect to the custom network
     networks:
       - vault-net
@@ -23,16 +23,16 @@ services:
     environment:
       # VAULT_ADDR and VAULT_API_ADDR should reflect how other nodes or the host access the service.
       # Using the container's hostname for inter-container comms.
-      VAULT_ADDR: "http://cluster-pri:8200"
-      VAULT_CLUSTER_ADDR: "http://cluster-pri:8201"
-      VAULT_API_ADDR: "http://cluster-pri:8200"
-      VAULT_RAFT_NODE_ID: "cluster-pri"
+      VAULT_ADDR: "http://cluster-pri-nd-1:8200"
+      VAULT_CLUSTER_ADDR: "http://cluster-pri-nd-1:8201"
+      VAULT_API_ADDR: "http://cluster-pri-nd-1:8200"
+      VAULT_RAFT_NODE_ID: "cluster-pri-nd-1"
       # IMPORTANT: Replace $VAULT_LICENSE with your actual license or pass it via the environment.
       VAULT_LICENSE: "${VAULT_LICENSE}"
     # Map local config/data directories to container paths
     volumes:
-      - ./cluster-pri/config/vault.hcl:/vault/config/vault-server.hcl:z
-      - ./cluster-pri/data:/vault/file:z
+      - ./cluster-pri/config/vault_1.hcl:/vault/config/vault-server.hcl:z
+      - ./cluster-pri/data_1:/vault/file:z
     # Required for disable_mlock=false in config (though you're using true, it's good practice)
     cap_add:
       - IPC_LOCK
@@ -41,11 +41,78 @@ services:
     # Ensures the container restarts if it crashes
     restart: unless-stopped
     # Detach and remove are handled by docker-compose commands (up/down)
-
+  cluster-pri-nd-2:
+    # Use the Vault Enterprise image
+    image: hashicorp/vault-enterprise:latest
+    container_name: vault-ent-pri-nd-2
+    hostname: cluster-pri-nd-2
+    # Connect to the custom network
+    networks:
+      - vault-net
+    # Expose the API port externally (only the primary node needs this)
+    ports:
+      - "8202:8202"
+      - "8203:8203"
+    # Essential environment variables
+    environment:
+      # VAULT_ADDR and VAULT_API_ADDR should reflect how other nodes or the host access the service.
+      # Using the container's hostname for inter-container comms.
+      VAULT_ADDR: "http://cluster-pri-nd-2:8202"
+      VAULT_CLUSTER_ADDR: "http://cluster-pri-nd-2:8203"
+      VAULT_API_ADDR: "http://cluster-pri-nd-2:8202"
+      VAULT_RAFT_NODE_ID: "cluster-pri-nd-2"
+      # IMPORTANT: Replace $VAULT_LICENSE with your actual license or pass it via the environment.
+      VAULT_LICENSE: "${VAULT_LICENSE}"
+    # Map local config/data directories to container paths
+    volumes:
+      - ./cluster-pri/config/vault_2.hcl:/vault/config/vault-server.hcl:z
+      - ./cluster-pri/data_2:/vault/file:z
+    # Required for disable_mlock=false in config (though you're using true, it's good practice)
+    cap_add:
+      - IPC_LOCK
+    # Command to run Vault server
+    command: vault server -config=/vault/config/vault-server.hcl
+    # Ensures the container restarts if it crashes
+    restart: unless-stopped
+    # Detach and remove are handled by docker-compose commands (up/down)
+  cluster-pri-nd-3:
+    # Use the Vault Enterprise image
+    image: hashicorp/vault-enterprise:latest
+    container_name: vault-ent-pri-nd-3
+    hostname: cluster-pri-nd-3
+    # Connect to the custom network
+    networks:
+      - vault-net
+    # Expose the API port externally (only the primary node needs this)
+    ports:
+      - "8204:8204"
+      - "8205:8205"
+    # Essential environment variables
+    environment:
+      # VAULT_ADDR and VAULT_API_ADDR should reflect how other nodes or the host access the service.
+      # Using the container's hostname for inter-container comms.
+      VAULT_ADDR: "http://cluster-pri-nd-3:8204"
+      VAULT_CLUSTER_ADDR: "http://cluster-pri-nd-3:8205"
+      VAULT_API_ADDR: "http://cluster-pri-nd-3:8204"
+      VAULT_RAFT_NODE_ID: "cluster-pri-nd-3"
+      # IMPORTANT: Replace $VAULT_LICENSE with your actual license or pass it via the environment.
+      VAULT_LICENSE: "${VAULT_LICENSE}"
+    # Map local config/data directories to container paths
+    volumes:
+      - ./cluster-pri/config/vault_3.hcl:/vault/config/vault-server.hcl:z
+      - ./cluster-pri/data_3:/vault/file:z
+    # Required for disable_mlock=false in config (though you're using true, it's good practice)
+    cap_add:
+      - IPC_LOCK
+    # Command to run Vault server
+    command: vault server -config=/vault/config/vault-server.hcl
+    # Ensures the container restarts if it crashes
+    restart: unless-stopped
+    # Detach and remove are handled by docker-compose commands (up/down)
   # 2. Performance Standby Cluster Node
   cluster-perf:
     image: hashicorp/vault-enterprise:latest
-    container_name: vault-enterprise-cluster-perf
+    container_name: vault-ent-perf
     hostname: cluster-perf
     networks:
       - vault-net
@@ -68,12 +135,12 @@ services:
     restart: unless-stopped
     # Wait for the primary to be up before starting (optional but helpful)
     depends_on:
-      - cluster-pri
+      - cluster-pri-nd-1
 
   # 3. DR Standby Cluster Node
   cluster-dr:
     image: hashicorp/vault-enterprise:latest
-    container_name: vault-enterprise-cluster-dr
+    container_name: vault-ent-dr
     hostname: cluster-dr
     networks:
       - vault-net
@@ -94,4 +161,4 @@ services:
     command: vault server -config=/vault/config/vault-server.hcl
     restart: unless-stopped
     depends_on:
-      - cluster-pri
+      - cluster-pri-nd-1

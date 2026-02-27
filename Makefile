@@ -3,9 +3,12 @@ DC=docker compose
 PRI=cluster-pri
 PERF=cluster-perf
 DR=cluster-dr
-PRI_CONT=vault-enterprise-cluster-pri
-PERF_CONT=vault-enterprise-cluster-perf
-DR_CONT=vault-enterprise-cluster-dr
+PRI_CONT=vault-ent-pri
+PRI_CONT_NODE_1=vault-ent-pri-nd-1
+PRI_CONT_NODE_2=vault-ent-pri-nd-2
+PRI_CONT_NODE_3=vault-ent-pri-nd-3
+PERF_CONT=vault-ent-perf
+DR_CONT=vault-ent-dr
 
 # Function to extract and clean a value from init file
 # Extracts a value matching the pattern and removes ANSI color codes
@@ -19,14 +22,21 @@ endef
 up: ## Spin-up Vault clusters
 	$(DC) up --build --detach
 
-init: ## Initialize Vault cluster
-	docker exec -i $(PRI_CONT) vault operator init -address=http://127.0.0.1:8200 -key-shares=1 -key-threshold=1 > $(PRI)/.init
+init: ## Initialize Vault clusters
+	docker exec -i $(PRI_CONT_NODE_1) vault operator init -address=http://127.0.0.1:8200 -key-shares=1 -key-threshold=1 > $(PRI)/.init
 	docker exec -i $(PERF_CONT) vault operator init -address=http://127.0.0.1:8210 -key-shares=1 -key-threshold=1 > $(PERF)/.init
 	docker exec -i $(DR_CONT) vault operator init -address=http://127.0.0.1:8220 -key-shares=1 -key-threshold=1 > $(DR)/.init
 
 unseal: ## Unseal Vault cluster
 	@for key in $(shell awk '/Unseal Key/ {print $$NF}' $(PRI)/.init | sed 's/\x1b\[[0-9;]*m//g'); do \
-		docker exec -it $(PRI_CONT) vault operator unseal -address=http://127.0.0.1:8200 $$key; \
+		docker exec -it $(PRI_CONT_NODE_1) vault operator unseal -address=http://127.0.0.1:8200 $$key; \
+	done
+	sleep 2
+	@for key in $(shell awk '/Unseal Key/ {print $$NF}' $(PRI)/.init | sed 's/\x1b\[[0-9;]*m//g'); do \
+		docker exec -it $(PRI_CONT_NODE_2) vault operator unseal -address=http://127.0.0.1:8202 $$key; \
+	done
+	@for key in $(shell awk '/Unseal Key/ {print $$NF}' $(PRI)/.init | sed 's/\x1b\[[0-9;]*m//g'); do \
+		docker exec -it $(PRI_CONT_NODE_3) vault operator unseal -address=http://127.0.0.1:8204 $$key; \
 	done
 	@for key in $(shell awk '/Unseal Key/ {print $$NF}' $(PERF)/.init | sed 's/\x1b\[[0-9;]*m//g'); do \
 		docker exec -it $(PERF_CONT) vault operator unseal -address=http://127.0.0.1:8210 $$key; \
@@ -51,13 +61,13 @@ establish-pr: ## Establish Vault PR Replication
 establish-dr: ## Establish Vault DR Replication
 	@PRI_TOKEN=$(call extract_value,Initial Root Token,$(PRI)/.init); \
 	DR_TOKEN=$(call extract_value,Initial Root Token,$(DR)/.init); \
-	VAULT_ADDR=http://127.0.0.1:8200 VAULT_TOKEN=$$PRI_TOKEN vault write -f sys/replication/dr/primary/enable primary_cluster_addr=http://vault-enterprise-cluster-pri:8201; \
+	VAULT_ADDR=http://127.0.0.1:8200 VAULT_TOKEN=$$PRI_TOKEN vault write -f sys/replication/dr/primary/enable; \
 	VAULT_ADDR=http://127.0.0.1:8200 VAULT_TOKEN=$$PRI_TOKEN vault write sys/replication/dr/primary/secondary-token id=dr-secondary -format=json | jq -r '.wrap_info.token' > $(DR)/.dr_token; \
 	VAULT_ADDR=http://127.0.0.1:8220 VAULT_TOKEN=$$DR_TOKEN vault write sys/replication/dr/secondary/enable token=$$(cat $(DR)/.dr_token)
 
 down: ## Clean up environment
 	$(DC) down --volumes
-	sudo rm -rf cluster-pri/data/*
+	sudo rm -rf cluster-pri/data_*/
 	sudo rm -rf cluster-perf/data/*
 	sudo rm -rf cluster-dr/data/*
 	rm -f $(PERF)/.perf_token
