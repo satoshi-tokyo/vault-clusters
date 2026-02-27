@@ -1,4 +1,6 @@
 .init
+.perf_token
+.dr_token
 .env
 cluster-pri/data_*/
 cluster-perf/data/*

@@ -2,7 +2,7 @@ ui = true
 listener "tcp" {
   tls_disable = 1
   address = "[::]:8220"
-  cluster_address = "vault-ent-dr:8221"
+  cluster_address = "[::]:8221"
 }
 
 disable_mlock = true

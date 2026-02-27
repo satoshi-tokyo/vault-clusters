@@ -3,12 +3,11 @@ DC=docker compose
 PRI=cluster-pri
 PERF=cluster-perf
 DR=cluster-dr
-PRI_CONT=vault-ent-pri
-PRI_CONT_NODE_1=vault-ent-pri-nd-1
-PRI_CONT_NODE_2=vault-ent-pri-nd-2
-PRI_CONT_NODE_3=vault-ent-pri-nd-3
-PERF_CONT=vault-ent-perf
-DR_CONT=vault-ent-dr
+PRI_CONT_NODE_1=cluster-pri-nd-1
+PRI_CONT_NODE_2=cluster-pri-nd-2
+PRI_CONT_NODE_3=cluster-pri-nd-3
+PERF_CONT=cluster-perf
+DR_CONT=cluster-dr
 
 # Function to extract and clean a value from init file
 # Extracts a value matching the pattern and removes ANSI color codes
@@ -31,7 +30,7 @@ unseal: ## Unseal Vault cluster
 	@for key in $(shell awk '/Unseal Key/ {print $$NF}' $(PRI)/.init | sed 's/\x1b\[[0-9;]*m//g'); do \
 		docker exec -it $(PRI_CONT_NODE_1) vault operator unseal -address=http://127.0.0.1:8200 $$key; \
 	done
-	sleep 2
+	sleep 3
 	@for key in $(shell awk '/Unseal Key/ {print $$NF}' $(PRI)/.init | sed 's/\x1b\[[0-9;]*m//g'); do \
 		docker exec -it $(PRI_CONT_NODE_2) vault operator unseal -address=http://127.0.0.1:8202 $$key; \
 	done

@@ -10,7 +10,7 @@ services:
   cluster-pri-nd-1:
     # Use the Vault Enterprise image
     image: hashicorp/vault-enterprise:latest
-    container_name: vault-ent-pri-nd-1
+    container_name: cluster-pri-nd-1
     hostname: cluster-pri-nd-1
     # Connect to the custom network
     networks:
@@ -44,7 +44,7 @@ services:
   cluster-pri-nd-2:
     # Use the Vault Enterprise image
     image: hashicorp/vault-enterprise:latest
-    container_name: vault-ent-pri-nd-2
+    container_name: cluster-pri-nd-2
     hostname: cluster-pri-nd-2
     # Connect to the custom network
     networks:
@@ -78,7 +78,7 @@ services:
   cluster-pri-nd-3:
     # Use the Vault Enterprise image
     image: hashicorp/vault-enterprise:latest
-    container_name: vault-ent-pri-nd-3
+    container_name: cluster-pri-nd-3
     hostname: cluster-pri-nd-3
     # Connect to the custom network
     networks:
@@ -112,7 +112,7 @@ services:
   # 2. Performance Standby Cluster Node
   cluster-perf:
     image: hashicorp/vault-enterprise:latest
-    container_name: vault-ent-perf
+    container_name: cluster-perf
     hostname: cluster-perf
     networks:
       - vault-net
@@ -140,7 +140,7 @@ services:
   # 3. DR Standby Cluster Node
   cluster-dr:
     image: hashicorp/vault-enterprise:latest
-    container_name: vault-ent-dr
+    container_name: cluster-dr
     hostname: cluster-dr
     networks:
       - vault-net
