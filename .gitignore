@@ -3,5 +3,5 @@
 .dr_token
 .env
 cluster-pri/data_*/
-cluster-perf/data/*
-cluster-dr/data/*
+cluster-perf/data_*
+cluster-dr/data_*

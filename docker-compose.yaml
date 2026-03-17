@@ -1,4 +1,3 @@
-# --- Network Definition ---
 networks:
   vault-net:
     # Use a bridge network for internal communication
@@ -14,7 +13,9 @@ services:
     hostname: cluster-pri-nd-1
     # Connect to the custom network
     networks:
-      - vault-net
+      vault-net:
+        aliases:
+          - cluster-pri.local  # CNAME alias for cluster-pri-nd-1
     # Expose the API port externally (only the primary node needs this)
     ports:
       - "8200:8200"
@@ -110,10 +111,10 @@ services:
     restart: unless-stopped
     # Detach and remove are handled by docker-compose commands (up/down)
   # 2. Performance Standby Cluster Node
-  cluster-perf:
+  cluster-perf-nd-1:
     image: hashicorp/vault-enterprise:latest
-    container_name: cluster-perf
-    hostname: cluster-perf
+    container_name: cluster-perf-nd-1
+    hostname: cluster-perf-nd-1
     networks:
       - vault-net
     ports:
@@ -121,14 +122,66 @@ services:
       - "8211:8211"
     # Performance standby doesn't usually expose its API port externally
     environment:
-      VAULT_ADDR: "http://cluster-perf:8210"
-      VAULT_CLUSTER_ADDR: "http://cluster-perf:8211"
-      VAULT_API_ADDR: "http://cluster-perf:8210"
-      VAULT_RAFT_NODE_ID: "cluster-perf"
+      VAULT_ADDR: "http://cluster-perf-nd-1:8210"
+      VAULT_CLUSTER_ADDR: "http://cluster-perf-nd-1:8211"
+      VAULT_API_ADDR: "http://cluster-perf-nd-1:8210"
+      VAULT_RAFT_NODE_ID: "cluster-perf-nd-1"
       VAULT_LICENSE: "${VAULT_LICENSE}"
     volumes:
-      - ./cluster-perf/config/vault.hcl:/vault/config/vault-server.hcl:z
-      - ./cluster-perf/data:/vault/file:z
+      - ./cluster-perf/config/vault_1.hcl:/vault/config/vault-server.hcl:z
+      - ./cluster-perf/data_1:/vault/file:z
+    cap_add:
+      - IPC_LOCK
+    command: vault server -config=/vault/config/vault-server.hcl
+    restart: unless-stopped
+    # Wait for the primary to be up before starting (optional but helpful)
+    depends_on:
+      - cluster-pri-nd-1
+  cluster-perf-nd-2:
+    image: hashicorp/vault-enterprise:latest
+    container_name: cluster-perf-nd-2
+    hostname: cluster-perf-nd-2
+    networks:
+      - vault-net
+    ports:
+      - "8212:8212"
+      - "8213:8213"
+    # Performance standby doesn't usually expose its API port externally
+    environment:
+      VAULT_ADDR: "http://cluster-perf-nd-2:8212"
+      VAULT_CLUSTER_ADDR: "http://cluster-perf-nd-2:8213"
+      VAULT_API_ADDR: "http://cluster-perf-nd-2:8212"
+      VAULT_RAFT_NODE_ID: "cluster-perf-nd-2"
+      VAULT_LICENSE: "${VAULT_LICENSE}"
+    volumes:
+      - ./cluster-perf/config/vault_2.hcl:/vault/config/vault-server.hcl:z
+      - ./cluster-perf/data_2:/vault/file:z
+    cap_add:
+      - IPC_LOCK
+    command: vault server -config=/vault/config/vault-server.hcl
+    restart: unless-stopped
+    # Wait for the primary to be up before starting (optional but helpful)
+    depends_on:
+      - cluster-pri-nd-1
+  cluster-perf-nd-3:
+    image: hashicorp/vault-enterprise:latest
+    container_name: cluster-perf-nd-3
+    hostname: cluster-perf-nd-3
+    networks:
+      - vault-net
+    ports:
+      - "8214:8214"
+      - "8215:8215"
+    # Performance standby doesn't usually expose its API port externally
+    environment:
+      VAULT_ADDR: "http://cluster-perf-nd-3:8214"
+      VAULT_CLUSTER_ADDR: "http://cluster-perf-nd-3:8215"
+      VAULT_API_ADDR: "http://cluster-perf-nd-3:8214"
+      VAULT_RAFT_NODE_ID: "cluster-perf-nd-3"
+      VAULT_LICENSE: "${VAULT_LICENSE}"
+    volumes:
+      - ./cluster-perf/config/vault_3.hcl:/vault/config/vault-server.hcl:z
+      - ./cluster-perf/data_3:/vault/file:z
     cap_add:
       - IPC_LOCK
     command: vault server -config=/vault/config/vault-server.hcl
@@ -138,27 +191,87 @@ services:
       - cluster-pri-nd-1
 
   # 3. DR Standby Cluster Node
-  cluster-dr:
+  cluster-dr-nd-1:
     image: hashicorp/vault-enterprise:latest
-    container_name: cluster-dr
-    hostname: cluster-dr
+    container_name: cluster-dr-nd-1
+    hostname: cluster-dr-nd-1
     networks:
       - vault-net
     ports:
       - "8220:8220"
       - "8221:8221"    # DR standby doesn't usually expose its API port externally
     environment:
-      VAULT_ADDR: "http://cluster-dr:8220"
-      VAULT_CLUSTER_ADDR: "http://cluster-dr:8221"
-      VAULT_API_ADDR: "http://cluster-dr:8220"
-      VAULT_RAFT_NODE_ID: "cluster-dr"
+      VAULT_ADDR: "http://cluster-dr-nd-1:8220"
+      VAULT_CLUSTER_ADDR: "http://cluster-dr-nd-1:8221"
+      VAULT_API_ADDR: "http://cluster-dr-nd-1:8220"
+      VAULT_RAFT_NODE_ID: "cluster-dr-nd-1"
       VAULT_LICENSE: "${VAULT_LICENSE}"
     volumes:
-      - ./cluster-dr/config/vault.hcl:/vault/config/vault-server.hcl:z
-      - ./cluster-dr/data:/vault/file:z
+      - ./cluster-dr/config/vault_1.hcl:/vault/config/vault-server.hcl:z
+      - ./cluster-dr/data_1:/vault/file:z
     cap_add:
       - IPC_LOCK
     command: vault server -config=/vault/config/vault-server.hcl
     restart: unless-stopped
     depends_on:
       - cluster-pri-nd-1
+  cluster-dr-nd-2:
+    image: hashicorp/vault-enterprise:latest
+    container_name: cluster-dr-nd-2
+    hostname: cluster-dr-nd-2
+    networks:
+      - vault-net
+    ports:
+      - "8222:8222"
+      - "8223:8223"    # DR standby doesn't usually expose its API port externally
+    environment:
+      VAULT_ADDR: "http://cluster-dr-nd-2:8222"
+      VAULT_CLUSTER_ADDR: "http://cluster-dr-nd-2:8223"
+      VAULT_API_ADDR: "http://cluster-dr-nd-2:8222"
+      VAULT_RAFT_NODE_ID: "cluster-dr-nd-2"
+      VAULT_LICENSE: "${VAULT_LICENSE}"
+    volumes:
+      - ./cluster-dr/config/vault_2.hcl:/vault/config/vault-server.hcl:z
+      - ./cluster-dr/data_2:/vault/file:z
+    cap_add:
+      - IPC_LOCK
+    command: vault server -config=/vault/config/vault-server.hcl
+    restart: unless-stopped
+    depends_on:
+      - cluster-pri-nd-1
+  cluster-dr-nd-3:
+    image: hashicorp/vault-enterprise:latest
+    container_name: cluster-dr-nd-3
+    hostname: cluster-dr-nd-3
+    networks:
+      - vault-net
+    ports:
+      - "8224:8224"
+      - "8225:8225"    # DR standby doesn't usually expose its API port externally
+    environment:
+      VAULT_ADDR: "http://cluster-dr-nd-3:8224"
+      VAULT_CLUSTER_ADDR: "http://cluster-dr-nd-3:8225"
+      VAULT_API_ADDR: "http://cluster-dr-nd-3:8224"
+      VAULT_RAFT_NODE_ID: "cluster-dr-nd-3"
+      VAULT_LICENSE: "${VAULT_LICENSE}"
+    volumes:
+      - ./cluster-dr/config/vault_3.hcl:/vault/config/vault-server.hcl:z
+      - ./cluster-dr/data_3:/vault/file:z
+    cap_add:
+      - IPC_LOCK
+    command: vault server -config=/vault/config/vault-server.hcl
+    restart: unless-stopped
+    depends_on:
+      - cluster-pri-nd-1
+  # 4. Nettool Utility Container
+  nettool:
+    image: nicolaka/netshoot:latest
+    container_name: nettool
+    hostname: nettool
+    networks:
+      - vault-net
+    command: sleep infinity
+    stdin_open: true
+    tty: true
+    restart: unless-stopped
+# --- Network Definition ---
