@@ -84,8 +84,8 @@ establish-dr: ## Establish Vault DR Replication
 down: ## Clean up environment
 	$(DC) down --volumes
 	sudo rm -rf cluster-pri/data_*/
-	sudo rm -rf cluster-perf/data/*
-	sudo rm -rf cluster-dr/data/*
+	sudo rm -rf cluster-perf/data_*/
+	sudo rm -rf cluster-dr/data_*/
 	rm -f $(PERF)/.perf_token
 	rm -f $(DR)/.dr_token
 	rm -f $(PRI)/.init
